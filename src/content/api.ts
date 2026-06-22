@@ -2,7 +2,7 @@
  * api.ts — Jira REST API helpers.
  */
 
-import { JSR_CONFIG, JSR_BASE_URL } from './config';
+import { JSR_CONFIG, JSR_BASE_URL, jsrLog } from './config';
 import type { JiraBoard, JiraSprint, JiraIssue, JiraSprintReport, JiraAssignee } from './types';
 
 async function jsrGet<T>(path: string): Promise<T> {
@@ -41,13 +41,11 @@ export async function jsrFetchAllSprints(boardId: string | number): Promise<Jira
     );
     const values = data.values || [];
     all = all.concat(values);
-    console.log(
-      `[JSR] fetchAllSprints page startAt=${startAt} got=${values.length} total_so_far=${all.length} isLast=${data.isLast}`
-    );
+    jsrLog(`[JSR] fetchAllSprints page startAt=${startAt} got=${values.length} total_so_far=${all.length} isLast=${data.isLast}`);
     if (data.isLast === true || values.length < maxResults || !values.length) break;
     startAt += values.length;
   }
-  console.log(`[JSR] fetchAllSprints done, total=${all.length} sprints`);
+  jsrLog(`[JSR] fetchAllSprints done, total=${all.length} sprints`);
   return all;
 }
 
@@ -70,7 +68,7 @@ export async function jsrDetectStoryPointFields(): Promise<void> {
           .filter((f) => /story\s*points?/i.test(f.name || ''))
           .map((f) => f.id);
         JSR_CONFIG.storyPointFields = [...new Set([...detected, ...JSR_CONFIG.storyPointFields])];
-        console.log(`[JSR] story point fields=${JSON.stringify(JSR_CONFIG.storyPointFields)}`);
+        jsrLog(`[JSR] story point fields=${JSON.stringify(JSR_CONFIG.storyPointFields)}`);
       })
       .catch((e: unknown) => {
         console.warn('[JSR] Failed to detect story point fields, using configured fallbacks:', e);

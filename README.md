@@ -12,6 +12,10 @@ A Chrome extension that generates sprint reports directly from Jira pages — ti
 - **Remember last board** — auto-fills your most recently used board on next open
 - **Export** — download as CSV, HTML, or PDF
 
+## Prerequisites
+
+**You must be logged in to Jira before using this extension.** SprintLens does not store or manage any credentials — it reads data by reusing the active session cookies from your existing Jira login. No token setup is required, but the extension will fail to load data if you are not already authenticated.
+
 ## Install
 
 1. Open `chrome://extensions`.

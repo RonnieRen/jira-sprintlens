@@ -4,9 +4,8 @@
   "description": "A Chrome extension that generates sprint reports directly from Jira pages — tickets, story points, bug breakdowns, carry-overs, and completion rates, all in one click.",
   "main": "background.js",
   "scripts": {
-    "dev": "vite build --watch",
-    "build": "vite build",
-    "build:prod": "vite build --mode production"
+    "dev": "vite build --watch --mode development",
+    "build": "vite build --mode production"
   },
   "repository": {
     "type": "git",

@@ -3,6 +3,7 @@
  */
 
 import type { JiraSprint, ParsedSprintName, GroupedSprints } from './types';
+import { jsrLog } from './config';
 
 /**
  * Parses sprint names in three supported formats:
@@ -82,7 +83,7 @@ export function jsrGroupSprintsByYear(sprints: JiraSprint[]): GroupedSprints {
     }
   }
   const years = Array.from(groups.keys()).sort((a, b) => b - a);
-  console.log(`[JSR] groupSprintsByYear years=${JSON.stringify(years)}, noYear=${noYear.length}`);
+  jsrLog(`[JSR] groupSprintsByYear years=${JSON.stringify(years)}, noYear=${noYear.length}`);
   return { years, groups, noYear };
 }
 

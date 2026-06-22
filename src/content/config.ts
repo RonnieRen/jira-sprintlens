@@ -25,6 +25,14 @@ export const JSR_CONFIG: JsrConfig = {
 /** Base URL for all Jira API calls and issue links. */
 export const JSR_BASE_URL = window.location.origin;
 
+/** True in `vite build --mode development`, false in production builds. Tree-shaken by Vite. */
+const JSR_DEBUG = import.meta.env.DEV;
+
+/** Log only in dev builds. Compiled away entirely in prod. */
+export function jsrLog(...args: unknown[]): void {
+  if (JSR_DEBUG) console.log(...args);
+}
+
 /** HTML-escape a string for safe insertion into innerHTML. */
 export function jsrEsc(str: string): string {
   const d = document.createElement('div');

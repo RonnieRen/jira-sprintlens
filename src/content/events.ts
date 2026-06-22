@@ -3,7 +3,7 @@
  * All DOM queries are deferred until initEvents() is called, after panel DOM exists.
  */
 
-import { jsrEsc } from './config';
+import { jsrEsc, jsrLog } from './config';
 import {
   jsrFetchAllSprints,
   jsrFetchSprintMembers,
@@ -125,10 +125,7 @@ async function handleGenerate(): Promise<void> {
       nextSprint ? jsrFetchSprintIssues(nextSprint.id, null) : Promise.resolve([]),
       prevSprint ? jsrFetchSprintIssues(prevSprint.id, null) : Promise.resolve([]),
     ]);
-    console.log(
-      `[JSR] next sprint: ${nextSprint?.name ?? 'none'}, prev sprint: ${prevSprint?.name ?? 'none'}`
-    );
-
+    jsrLog(`[JSR] next sprint: ${nextSprint?.name ?? 'none'}, prev sprint: ${prevSprint?.name ?? 'none'}`);
     if (!issues.length) {
       reportDiv.innerHTML =
         '<div class="jsr-loading">No issues found for selected sprint/assignee.</div>';

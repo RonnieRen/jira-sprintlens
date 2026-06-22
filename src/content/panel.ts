@@ -10,7 +10,7 @@
  * events.ts calls during its init to register handlers.
  */
 
-import { jsrEsc } from './config';
+import { jsrEsc, jsrLog } from './config';
 import { jsrFetchAllBoards, jsrDetectBoardFromUrl } from './api';
 import { jsrSortSprintsByYearWeek,  } from './sprint-utils';
 import type { JiraBoard, JiraSprint, GroupedSprints } from './types';
@@ -25,7 +25,7 @@ declare global {
 if (window.__JSR_LOADED__) {
   // Already running — just re-expose the open function and bail out.
   // This path is taken when Chrome injects the script a second time.
-  console.log('[JSR] already loaded, skipping re-init');
+  jsrLog('[JSR] already loaded, skipping re-init');
 } else {
   window.__JSR_LOADED__ = true;
   init();
