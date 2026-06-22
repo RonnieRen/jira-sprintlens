@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Jira SprintLens — Settings</title>
+  <link rel="stylesheet" href="./index.css">
+</head>
+<body>
+  <h1><img src="../../icons/icon48.png" width="28" height="28" alt="SprintLens" style="vertical-align:middle;margin-right:8px;border-radius:6px"> Jira SprintLens</h1>
+  <p class="subtitle">Settings</p>
+
+  <div class="section">
+    <h2>Built-in Domains</h2>
+    <ul class="built-in-list">
+      <li>*.atlassian.net</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>Custom Jira Domains</h2>
+    <div class="add-row">
+      <input type="text" id="domain-input" aria-label="Domain" placeholder="e.g. jira.example.com">
+      <button class="btn btn-primary" id="add-btn">Add</button>
+    </div>
+    <div class="error" id="error-msg"></div>
+    <ul class="domain-list" id="domain-list">
+      <li class="empty" id="empty-msg">No custom domains added yet.</li>
+    </ul>
+  </div>
+
+  <div class="toast" id="toast">Saved</div>
+
+  <script type="module" src="./index.ts"></script>
+</body>
+</html>

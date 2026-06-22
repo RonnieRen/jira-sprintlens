@@ -1,0 +1,29 @@
+{
+  "name": "jira-report",
+  "version": "1.0.0",
+  "description": "A Chrome extension that generates sprint reports directly from Jira pages — tickets, story points, bug breakdowns, carry-overs, and completion rates, all in one click.",
+  "main": "background.js",
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build",
+    "build:prod": "vite build --mode production"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RonnieRen/jira-sprintlens.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RonnieRen/jira-sprintlens/issues"
+  },
+  "homepage": "https://github.com/RonnieRen/jira-sprintlens#readme",
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^2.7.0",
+    "@types/chrome": "^0.2.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.16"
+  },
+  "type": "module"
+}
