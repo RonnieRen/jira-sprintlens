@@ -112,7 +112,7 @@ function init(): void {
         <label style="flex-direction:row;align-items:center;gap:6px;cursor:pointer;
                       font-size:12px;font-weight:600;color:#6B778C;
                       text-transform:uppercase;letter-spacing:.5px">
-          <input type="checkbox" id="jsr-show-carried-invalid" style="width:14px;height:14px;cursor:pointer">
+          <input type="checkbox" id="jsr-show-carried-invalid" style="width:14px;height:14px;cursor:pointer" checked>
           Show Carried-Over Invalid Bugs
         </label>
         <label>&nbsp;
@@ -169,41 +169,67 @@ export async function jsrOpenPanel(): Promise<void> {
   (document.getElementById('jsr-generate') as HTMLButtonElement).disabled = true;
   jsrSelectedBoardId = null;
 
-  jsrBoardInput.placeholder = 'Loading boards...';
+  // ── Step 1: immediately restore saved board so sprints start loading ──────
+  const quickBoard = await jsrGetSavedBoard();
+  if (quickBoard && jsrPanelOpen) {
+    jsrBoardInput.value = quickBoard.name;
+    (document.getElementById('jsr-board-value') as HTMLInputElement).value = quickBoard.id;
+    document.getElementById('jsr-board-wrap')!.classList.add('has-value');
+    jsrSelectedBoardId = quickBoard.id;
+    // Trigger sprint loading immediately — don't wait for board list
+    _onBoardChange(quickBoard.id);
+  }
+
+  // ── Step 2: fetch full board list in background for the search dropdown ───
+  jsrBoardInput.placeholder = quickBoard ? quickBoard.name : 'Loading boards...';
   const requestId = ++jsrBoardSearchRequestId;
   try {
     jsrAllBoards = await jsrFetchAllBoards();
     if (requestId !== jsrBoardSearchRequestId || !jsrPanelOpen) return;
     jsrBoardInput.placeholder = `Search ${jsrAllBoards.length} boards...`;
 
-    const detectedId = jsrDetectBoardFromUrl();
-    if (detectedId) {
-      const match = jsrAllBoards.find((b) => String(b.id) === detectedId);
-      if (match) { jsrSelectBoard(String(match.id), match.name); return; }
-    }
-
-    try {
-      chrome.storage.local.get('jsr_last_board', (result) => {
-        const saved = result?.['jsr_last_board'] as { id: string; name: string } | undefined;
-        if (!saved) {
-          try {
-            const raw = localStorage.getItem('jsr_last_board');
-            if (raw) {
-              const { id } = JSON.parse(raw) as { id: string };
-              const match = jsrAllBoards.find((b) => String(b.id) === String(id));
-              if (match) jsrSelectBoard(String(match.id), match.name);
-            }
-          } catch (_) { /* ignore */ }
-          return;
-        }
-        const match = jsrAllBoards.find((b) => String(b.id) === String(saved.id));
+    // If no board was pre-loaded, try URL detection now
+    if (!quickBoard) {
+      const detectedId = jsrDetectBoardFromUrl();
+      if (detectedId) {
+        const match = jsrAllBoards.find((b) => String(b.id) === detectedId);
         if (match) jsrSelectBoard(String(match.id), match.name);
-      });
-    } catch (_) { /* ignore */ }
+      }
+    }
   } catch (e) {
     jsrBoardInput.placeholder = 'Error loading boards';
     console.error('[JSR]', e);
   }
+}
+
+/** Reads the saved board from chrome.storage or localStorage. */
+function jsrGetSavedBoard(): Promise<{ id: string; name: string } | null> {
+  // Check URL first — fastest, no async needed
+  const detectedId = jsrDetectBoardFromUrl();
+  if (detectedId) {
+    // We don't have the name yet (board list not loaded), skip URL path here;
+    // it will be handled after board list loads if no storage match.
+  }
+
+  return new Promise((resolve) => {
+    try {
+      chrome.storage.local.get('jsr_last_board', (result) => {
+        const saved = result?.['jsr_last_board'] as { id: string; name: string } | undefined;
+        if (saved?.id && saved?.name) { resolve(saved); return; }
+        // Fallback to localStorage
+        try {
+          const raw = localStorage.getItem('jsr_last_board');
+          if (raw) {
+            const parsed = JSON.parse(raw) as { id: string; name: string };
+            if (parsed?.id && parsed?.name) { resolve(parsed); return; }
+          }
+        } catch (_) { /* ignore */ }
+        resolve(null);
+      });
+    } catch (_) {
+      resolve(null);
+    }
+  });
 }
 
 // ── Overlay / close button ────────────────────────────────────────────────────
@@ -231,7 +257,8 @@ function initDrag(): void {
     dragging = true;
     header.classList.add('dragging');
     const rect = panel.getBoundingClientRect();
-    panel.style.position = 'absolute';
+    // Switch to fixed positioning so the panel is viewport-relative during drag
+    panel.style.position = 'fixed';
     panel.style.margin   = '0';
     panel.style.left     = rect.left + 'px';
     panel.style.top      = rect.top  + 'px';

@@ -138,6 +138,14 @@ async function handleGenerate(): Promise<void> {
 
     const analysis = jsrAnalyzeIssues(issues, sprintReport, sprintId, nextIssues, prevIssues);
     jsrRenderReport(analysis, sprintName, assignee, showCarriedInvalid);
+
+    // Save board after a successful report generation
+    const boardName = (document.getElementById('jsr-board-input') as HTMLInputElement).value;
+    if (boardId && boardName) {
+      try { chrome.storage.local.set({ jsr_last_board: { id: boardId, name: boardName } }); } catch (_) {
+        try { localStorage.setItem('jsr_last_board', JSON.stringify({ id: boardId, name: boardName })); } catch (_) { /* ignore */ }
+      }
+    }
   } catch (e) {
     reportDiv.innerHTML = `<div class="jsr-loading" style="color:#FF5630">❌ ${jsrEsc((e as Error).message)}</div>`;
     console.error('[JSR]', e);
