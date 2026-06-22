@@ -51,7 +51,9 @@
     #jsr-panel-header {
       padding: 24px 28px 16px; border-bottom: 1px solid #EBECF0;
       display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+      cursor: grab; user-select: none;
     }
+    #jsr-panel-header.dragging { cursor: grabbing; }
     #jsr-panel-header h2 { margin: 0; font-size: 20px; color: #172B4D; }
     #jsr-close {
       background: none; border: none; font-size: 22px; color: #6B778C;
@@ -695,10 +697,10 @@
 
       html += `<tr class="${r.isDevDoneTestPending ? 'jsr-row-devdone' : ''}">
         <td><a href="${baseUrl}/browse/${r.key}" target="_blank" style="color:#0052CC;text-decoration:none;font-weight:600">${r.key}</a></td>
-        <td>${r.typeIcon ? `<img src="${r.typeIcon}" width="16" style="vertical-align:middle;margin-right:4px">` : ''}${esc(r.type)}</td>
+        <td>${r.typeIcon ? `<img src="${r.typeIcon}" width="16" alt="${esc(r.type)}" style="vertical-align:middle;margin-right:4px">` : ''}${esc(r.type)}</td>
         <td style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.summary)}">${esc(r.summary)}</td>
         <td><span class="jsr-tag ${statusTag}">${esc(r.status)}</span></td>
-        <td>${r.priorityIcon ? `<img src="${r.priorityIcon}" width="16" style="vertical-align:middle;margin-right:4px">` : ''}${esc(r.priority)}</td>
+        <td>${r.priorityIcon ? `<img src="${r.priorityIcon}" width="16" alt="${esc(r.priority)}" style="vertical-align:middle;margin-right:4px">` : ''}${esc(r.priority)}</td>
         <td>${esc(r.assignee)}</td>
         <td style="text-align:center">${r.sp || '-'}</td>
         <td style="text-align:center">${r.creditedSP || '-'}</td>
@@ -717,7 +719,7 @@
 
     document.getElementById('jsr-report').innerHTML = html;
     document.getElementById('jsr-export-csv').onclick = () => exportCSV(analysis, sprintName, who);
-    document.getElementById('jsr-export-html').onclick = () => exportHTML(analysis, sprintName, who);
+    document.getElementById('jsr-export-html').onclick = () => exportHTML(sprintName);
     document.getElementById('jsr-export-pdf').onclick = () => exportPDF(sprintName);
   }
 
@@ -752,10 +754,10 @@
 
   function buildExportHTML(sprintName, { autoPrint = false } = {}) {
     const content = document.getElementById('jsr-report').innerHTML;
-    return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Sprint Report: ${esc(sprintName)}</title>
+    return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Sprint Report: ${esc(sprintName)}</title>
     <style>
       body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:960px;margin:40px auto;padding:0 20px;color:#172B4D}
-      ${style.textContent.replace(/#jsr-trigger[\s\S]*?#jsr-overlay\.active\s*\{[^}]*\}/g, '')}
+      ${style.textContent.replace(/#jsr-trigger[\s\S]*?#jsr-overlay\.active\s*\{[^}]*}/g, '')}
       .jsr-export-bar{display:none}
       @media print {
         body{max-width:none;margin:0;padding:0}
@@ -772,7 +774,7 @@
     </body></html>`;
   }
 
-  function exportHTML(analysis, sprintName, who) {
+  function exportHTML(sprintName) {
     const html = buildExportHTML(sprintName);
     downloadFile(`sprintlens-${sprintName}.html`, html, 'text/html');
   }
@@ -797,7 +799,7 @@
   overlay.innerHTML = `
     <div id="jsr-panel">
       <div id="jsr-panel-header">
-        <h2><img src="${chrome.runtime.getURL('icons/icon48.png')}" width="28" height="28" style="vertical-align:middle;margin-right:8px;border-radius:6px">Jira SprintLens</h2>
+        <h2><img src="${chrome.runtime.getURL('icons/icon48.png')}" width="28" height="28" alt="SprintLens" style="vertical-align:middle;margin-right:8px;border-radius:6px">Jira SprintLens</h2>
         <button id="jsr-close">✕</button>
       </div>
       <div class="jsr-form" id="jsr-form">
@@ -845,6 +847,12 @@
     document.getElementById('jsr-sprint-dropdown')?.classList.remove('open');
     document.getElementById('jsr-board-input')?.blur();
     document.getElementById('jsr-sprint-input')?.blur();
+    // Reset panel position so it re-centers on next open
+    const panel = document.getElementById('jsr-panel');
+    panel.style.position = '';
+    panel.style.left = '';
+    panel.style.top = '';
+    panel.style.margin = '';
   };
 
   //─ Board search state ──
@@ -993,6 +1001,49 @@
     e.stopPropagation();
     closePanel();
   });
+
+  // ── Drag to reposition panel ──
+  (function initDrag() {
+    const panel = document.getElementById('jsr-panel');
+    const header = document.getElementById('jsr-panel-header');
+    let dragging = false, startX = 0, startY = 0, originLeft = 0, originTop = 0;
+
+    header.addEventListener('mousedown', (e) => {
+      // Don't drag when clicking the close button
+      if (e.target.closest('#jsr-close')) return;
+      e.preventDefault();
+      dragging = true;
+      header.classList.add('dragging');
+
+      // Switch panel from flex-centered to absolute positioning
+      const rect = panel.getBoundingClientRect();
+      panel.style.position = 'absolute';
+      panel.style.margin = '0';
+      panel.style.left = rect.left + 'px';
+      panel.style.top = rect.top + 'px';
+
+      startX = e.clientX;
+      startY = e.clientY;
+      originLeft = rect.left;
+      originTop = rect.top;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      const newLeft = Math.max(0, Math.min(window.innerWidth - panel.offsetWidth, originLeft + dx));
+      const newTop = Math.max(0, Math.min(window.innerHeight - panel.offsetHeight, originTop + dy));
+      panel.style.left = newLeft + 'px';
+      panel.style.top = newTop + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!dragging) return;
+      dragging = false;
+      header.classList.remove('dragging');
+    });
+  })();
 
   // ── Board search events ──
   const boardInput = document.getElementById('jsr-board-input');

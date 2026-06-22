@@ -62,7 +62,7 @@ async function init() {
 
   // Show add prompt
   render(`
-    <div class="header"><img src="icons/icon32.png" width="22" height="22" style="border-radius:4px"><strong>Jira SprintLens</strong></div>
+    <div class="header"><img src="icons/icon32.png" width="22" height="22" alt="SprintLens" style="border-radius:4px"><strong>Jira SprintLens</strong></div>
     <div class="domain">${host}</div>
     <p class="desc">This Jira instance isn't enabled yet. Add it to activate SprintLens here?</p>
     <div class="actions">

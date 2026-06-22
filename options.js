@@ -14,7 +14,7 @@ function normalizeDomain(raw) {
 }
 
 function isValidDomain(domain) {
-  return /^[a-z0-9]([a-z0-9\-\.]*[a-z0-9])?(\.[a-z]{2,})+$/.test(domain);
+  return /^[a-z0-9]([a-z0-9\-.]*[a-z0-9])?(\.[a-z]{2,})+$/.test(domain);
 }
 
 function showToast(msg = 'Saved') {
